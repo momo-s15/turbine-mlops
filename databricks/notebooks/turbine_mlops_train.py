@@ -32,10 +32,26 @@ for _registry_uri in ("databricks-uc", "databricks"):
         print(f"Skipping registry URI {_registry_uri}: {_exc}")
 
 # Prefer a user-scoped experiment (works on Free Edition); fall back to /Shared.
-try:
-    _user = dbutils.notebook.entry_point.getDbutils().notebook().getContext().userName().get()
-    EXPERIMENT = f"/Users/{_user}/turbine-mlops-rul"
-except Exception:
+# `dbutils` is injected at runtime on Databricks only — use getattr pattern so CI flake8 passes.
+_dbutils = globals().get("dbutils")
+if _dbutils is None:
+    import builtins
+
+    _dbutils = getattr(builtins, "dbutils", None)
+
+if _dbutils is not None:
+    try:
+        _user = (
+            _dbutils.notebook.entry_point.getDbutils()
+            .notebook()
+            .getContext()
+            .userName()
+            .get()
+        )
+        EXPERIMENT = f"/Users/{_user}/turbine-mlops-rul"
+    except Exception:
+        EXPERIMENT = "/Shared/turbine-mlops-rul"
+else:
     EXPERIMENT = "/Shared/turbine-mlops-rul"
 
 print(f"MLflow experiment: {EXPERIMENT}")
