@@ -1,0 +1,14 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.mypy_cache
+.venv
+venv
+.env
+*.md
+databricks
+tests
+requirements-dev.txt
+mlruns
