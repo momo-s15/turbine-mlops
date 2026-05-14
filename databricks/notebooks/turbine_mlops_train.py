@@ -1,6 +1,6 @@
 # Databricks notebook source
 # This notebook trains TurbineMLOps and registers the sklearn model in MLflow.
-# Open it from **Repos** (clone of this GitHub repo) and attach a **Running** cluster.
+# Open it from your **Git folder** (clone of this GitHub repo) and attach compute.
 
 # COMMAND ----------
 
@@ -20,7 +20,25 @@ if repo_root not in sys.path:
 import mlflow
 import mlflow.sklearn
 
-EXPERIMENT = "/Shared/turbine-mlops-rul"
+# Spark Connect / Serverless: do not rely on spark.mlflow.modelRegistryUri from Spark.
+# Set workspace tracking + registry before set_experiment (avoids CONFIG_NOT_AVAILABLE).
+mlflow.set_tracking_uri("databricks")
+for _registry_uri in ("databricks-uc", "databricks"):
+    try:
+        mlflow.set_registry_uri(_registry_uri)
+        print(f"MLflow registry URI: {_registry_uri}")
+        break
+    except Exception as _exc:
+        print(f"Skipping registry URI {_registry_uri}: {_exc}")
+
+# Prefer a user-scoped experiment (works on Free Edition); fall back to /Shared.
+try:
+    _user = dbutils.notebook.entry_point.getDbutils().notebook().getContext().userName().get()
+    EXPERIMENT = f"/Users/{_user}/turbine-mlops-rul"
+except Exception:
+    EXPERIMENT = "/Shared/turbine-mlops-rul"
+
+print(f"MLflow experiment: {EXPERIMENT}")
 REGISTERED_NAME = "turbine-mlops-rul-sklearn"
 
 mlflow.set_experiment(EXPERIMENT)
@@ -36,5 +54,10 @@ with mlflow.start_run(run_name="TurbineMLOps_Databricks"):
     assert run is not None
     run_id = run.info.run_id
     model_uri = f"runs:/{run_id}/model"
-    mlflow.register_model(model_uri, REGISTERED_NAME)
-    print(f"RMSE={metrics['rmse']:.4f} run_id={run_id} registered={REGISTERED_NAME}")
+    try:
+        mlflow.register_model(model_uri, REGISTERED_NAME)
+        reg_status = REGISTERED_NAME
+    except Exception as _reg_exc:
+        reg_status = f"skipped ({_reg_exc}) — register from Experiments UI"
+    print(f"RMSE={metrics['rmse']:.4f} run_id={run_id} model_uri={model_uri}")
+    print(f"register_model: {reg_status}")

@@ -39,7 +39,7 @@ If you see `ModuleNotFoundError: turbine_mlops`, you are not running from the **
 ## Part E — Experiments (MLflow)
 
 1. Sidebar: **Machine Learning** → **Experiments** (or search **Experiments**).
-2. Open experiment **`/Shared/turbine-mlops-rul`**.
+2. Open experiment **`/Users/<your-email>/turbine-mlops-rul`** (created by the notebook on Free Edition / Serverless) or **`/Shared/turbine-mlops-rul`** if you use that path.
 3. Open the latest **Run** and confirm metric **`rmse`** and artifact **`model`**.
 
 ## Part F — Registered model and download
@@ -75,4 +75,5 @@ If your workspace registers models under **Catalog** instead of legacy **Models*
 |--------|----------------|
 | Cluster won’t start | Trial quota; smaller runtime; different region if allowed. |
 | `register_model` fails | Permissions; ask workspace admin. You can still use the **run** artifact without registering. |
+| `[CONFIG_NOT_AVAILABLE] spark.mlflow.modelRegistryUri` (Serverless / Spark Connect) | The notebook sets **`mlflow.set_tracking_uri("databricks")`** and **`mlflow.set_registry_uri("databricks-uc")`** or **`"databricks"`** before `set_experiment`. Pull the latest notebook from GitHub and **Run all** again. If it still fails, try compute that is a classic **ML cluster** instead of Serverless. |
 | Wrong sklearn file | Inside MLflow artifacts, use the file produced by the **sklearn** flavor (`model.pkl`), not random side files. |
