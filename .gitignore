@@ -9,3 +9,8 @@ venv/
 mlruns/
 .idea/
 .vscode/
+
+# Local-only documentation (not tracked / not pushed)
+README.md
+progress.md
+databricks/README.md
