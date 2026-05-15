@@ -21,12 +21,21 @@ This is the full path from experiment to served inference: reproducible training
 Training and serving are **decoupled**. Each side moves on its own cadence while honoring a single contract: the serialized model artifact and the inference request schema.
 
 ![TurbineMLOps system architecture](architecture.png)
+
 | Stage | What happens |
 |--------|----------------|
 | **Data** | Synthetic **CMAPSS-inspired** sensor streams (static pressure, core speed) with a physically grounded **RUL** target. Full control of the training distribution without shipping proprietary fleet data. |
 | **Train & track** | **Scikit-learn** `RandomForestRegressor`. **RMSE** and parameters logged to **Databricks-managed MLflow**. Model serialized for sklearn inference. |
 | **Serve** | **FastAPI** plus **Pydantic** validation, low-latency **RUL** responses, **Prometheus** counters and latency histograms at **`/metrics`**. |
 | **Ship** | **Docker** image with a pinned runtime. **GitHub Actions** runs **flake8**, **pytest**, and a **Docker build** on every push. |
+
+---
+
+## Verified inference
+
+**OpenAPI / Swagger** against a live **FastAPI** process on **uvicorn**. **`POST /predict`** with engine-shaped JSON returns **200** and a numeric **`predicted_RUL`** body.
+
+![Swagger UI: POST /predict returning predicted_RUL](inference-proof.png)
 
 ---
 
