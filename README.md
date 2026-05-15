@@ -20,32 +20,7 @@ This is the full path from experiment to served inference: reproducible training
 
 Training and serving are **decoupled**. Each side moves on its own cadence while honoring a single contract: the serialized model artifact and the inference request schema.
 
-```mermaid
-flowchart LR
-  subgraph train [Training_and_tracking]
-    DBX[Databricks_Git_folder]
-    NB[turbine_mlops_train_py]
-    MLF[MLflow_experiments]
-    REG[Model_registry_optional]
-    DBX --> NB
-    NB --> MLF
-    MLF --> REG
-  end
-  subgraph serve [Serving_and_delivery]
-    PKL[turbine_mlops_model_pkl]
-    API[FastAPI_Uvicorn]
-    PRM["/metrics_Prometheus"]
-    DOK[Docker_image]
-    CI[GitHub_Actions]
-    PKL --> API
-    API --> PRM
-    API --> DOK
-    CI --> DOK
-  end
-  REG -.->|artifact_download| PKL
-  MLF -.->|artifact_download| PKL
-```
-
+![TurbineMLOps system architecture](architecture.png)
 | Stage | What happens |
 |--------|----------------|
 | **Data** | Synthetic **CMAPSS-inspired** sensor streams (static pressure, core speed) with a physically grounded **RUL** target. Full control of the training distribution without shipping proprietary fleet data. |
