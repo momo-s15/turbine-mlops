@@ -172,10 +172,4 @@ python train.py
 
 ---
 
-## License
-
-Add a `LICENSE` file before redistribution if this repository leaves the personal portfolio context.
-
----
-
 **Repository:** [github.com/momo-s15/turbine-mlops](https://github.com/momo-s15/turbine-mlops)
