@@ -7,7 +7,6 @@
 .venv
 venv
 .env
-*.md
 databricks
 tests
 requirements-dev.txt
