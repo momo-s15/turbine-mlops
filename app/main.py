@@ -22,17 +22,26 @@ MODEL_PATH = Path(
 )
 
 _model = None
+_model_mtime: float | None = None
 
 
-def _set_model(model) -> None:
-    global _model
-    _model = model
+def _ensure_model_loaded() -> None:
+    """Load or reload the pickle when the file appears or its mtime changes (e.g. after train.py)."""
+    global _model, _model_mtime
+    if not MODEL_PATH.is_file():
+        _model = None
+        _model_mtime = None
+        return
+    mtime = MODEL_PATH.stat().st_mtime
+    if _model is not None and _model_mtime == mtime:
+        return
+    _model = joblib.load(MODEL_PATH)
+    _model_mtime = mtime
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if MODEL_PATH.is_file():
-        _set_model(joblib.load(MODEL_PATH))
+    _ensure_model_loaded()
     yield
 
 
@@ -58,6 +67,7 @@ class EngineTelemetry(BaseModel):
 
 @app.get("/health", response_model=None)
 def health():
+    _ensure_model_loaded()
     if _model is None:
         return JSONResponse(
             status_code=503,
@@ -71,6 +81,7 @@ def health():
 
 @app.post("/predict")
 def predict(data: EngineTelemetry) -> dict[str, float]:
+    _ensure_model_loaded()
     if _model is None:
         raise HTTPException(
             status_code=503,
@@ -81,7 +92,16 @@ def predict(data: EngineTelemetry) -> dict[str, float]:
         [[data.sensor_11, data.sensor_14]],
         columns=["sensor_11_static_pressure", "sensor_14_core_speed"],
     )
-    prediction = float(_model.predict(input_df)[0])
+    try:
+        prediction = float(_model.predict(input_df)[0])
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"Prediction failed ({type(exc).__name__}: {exc}). "
+                f"If you replaced the model file, run: python train.py"
+            ),
+        ) from exc
     PRED_COUNTER.inc()
     PRED_LATENCY.observe(time.perf_counter() - start)
     return {"predicted_RUL": round(prediction, 2)}
